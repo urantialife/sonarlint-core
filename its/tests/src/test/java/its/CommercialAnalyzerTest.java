@@ -39,7 +39,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.wsclient.services.PropertyCreateQuery;
-import org.sonar.wsclient.user.UserParameters;
 import org.sonarqube.ws.client.WsClient;
 import org.sonarqube.ws.client.permission.RemoveGroupWsRequest;
 import org.sonarsource.sonarlint.core.ConnectedSonarLintEngineImpl;
@@ -85,14 +84,13 @@ public class CommercialAnalyzerTest extends AbstractConnectedTest {
 
   @BeforeClass
   public static void prepare() throws Exception {
-    adminWsClient = ConnectedModeTest.newAdminWsClient(ORCHESTRATOR);
+    adminWsClient = newAdminWsClient(ORCHESTRATOR);
     ORCHESTRATOR.getServer().getAdminWsClient().create(new PropertyCreateQuery("sonar.forceAuthentication", "true"));
     sonarUserHome = temp.newFolder().toPath();
 
     removeGroupPermission("anyone", "scan");
 
-    ORCHESTRATOR.getServer().adminWsClient().userClient()
-      .create(UserParameters.create().login(SONARLINT_USER).password(SONARLINT_PWD).passwordConfirmation(SONARLINT_PWD).name("SonarLint"));
+    createSonarLintUser(adminWsClient);
 
     ORCHESTRATOR.getServer().provisionProject(PROJECT_KEY_C, "Sample C");
     ORCHESTRATOR.getServer().provisionProject(PROJECT_KEY_COBOL, "Sample Cobol");
@@ -194,16 +192,14 @@ public class CommercialAnalyzerTest extends AbstractConnectedTest {
   private void updateProject(String projectKey) {
     engine.updateProject(ServerConfiguration.builder()
       .url(ORCHESTRATOR.getServer().getUrl())
-      .userAgent("SonarLint ITs")
-      .credentials(SONARLINT_USER, SONARLINT_PWD)
+      .httpClient(client)
       .build(), projectKey, null);
   }
 
   private void updateGlobal() {
     engine.update(ServerConfiguration.builder()
       .url(ORCHESTRATOR.getServer().getUrl())
-      .userAgent("SonarLint ITs")
-      .credentials(SONARLINT_USER, SONARLINT_PWD)
+      .httpClient(client)
       .build(), null);
   }
 

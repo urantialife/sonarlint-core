@@ -94,7 +94,7 @@ public class ServerVersionAndStatusChecker {
 
   private ServerInfos fetchServerInfos() {
     return SonarLintWsClient.processTimed(
-      () -> wsClient.get("api/system/status"),
+      () -> wsClient.get("/api/system/status"),
       response -> {
         String responseStr = response.content();
         try {

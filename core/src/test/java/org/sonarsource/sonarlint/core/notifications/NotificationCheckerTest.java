@@ -19,22 +19,21 @@
  */
 package org.sonarsource.sonarlint.core.notifications;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.sonarsource.sonarlint.core.WsClientTestUtils;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 import org.sonarsource.sonarlint.core.client.api.notifications.SonarQubeNotification;
 import org.sonarsource.sonarlint.core.container.connected.SonarLintWsClient;
-import org.sonarsource.sonarlint.core.util.ws.WsResponse;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class NotificationCheckerTest {
   private static final String VALID_RESPONSE = "{" +
@@ -94,7 +93,7 @@ public class NotificationCheckerTest {
 
     SonarLintWsClient client = WsClientTestUtils.createMock();
 
-    WsResponse wsResponse = mock(WsResponse.class);
+    HttpClient.GetResponse wsResponse = mock(HttpClient.GetResponse.class);
     when(client.rawGet(startsWith(expectedUrl))).thenReturn(wsResponse);
     when(wsResponse.isSuccessful()).thenReturn(false);
 
@@ -108,7 +107,7 @@ public class NotificationCheckerTest {
 
     SonarLintWsClient client = WsClientTestUtils.createMock();
 
-    WsResponse wsResponse = mock(WsResponse.class);
+    HttpClient.GetResponse wsResponse = mock(HttpClient.GetResponse.class);
     when(client.rawGet(startsWith(expectedUrl))).thenReturn(wsResponse);
     when(wsResponse.isSuccessful()).thenReturn(true);
 

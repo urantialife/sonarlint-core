@@ -19,72 +19,24 @@
  */
 package org.sonarsource.sonarlint.core.client.api.connected;
 
-import java.net.Proxy;
-import java.util.Objects;
-
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 
 public class ServerConfiguration {
 
-  public static final int DEFAULT_CONNECT_TIMEOUT_MILLISECONDS = 30_000;
-  public static final int DEFAULT_READ_TIMEOUT_MILLISECONDS = 60_000;
-
   private final String url;
   private final String organizationKey;
-  private final String userAgent;
-  private final String login;
-  private final String password;
-  private final Proxy proxy;
-  private final String proxyLogin;
-  private final String proxyPassword;
-  private final int connectTimeoutMs;
-  private final int readTimeoutMs;
-  private SSLSocketFactory sslSocketFactory = null;
-  private X509TrustManager sslTrustManager = null;
+  private final HttpClient client;
 
   private ServerConfiguration(Builder builder) {
-    this.url = builder.url;
+    this.url = removeTrailingSlash(builder.url);
     this.organizationKey = builder.organizationKey;
-    this.userAgent = builder.userAgent;
-    this.login = builder.login;
-    this.password = builder.password;
-    this.proxy = builder.proxy;
-    this.proxyLogin = builder.proxyLogin;
-    this.proxyPassword = builder.proxyPassword;
-    this.connectTimeoutMs = builder.connectTimeoutMs;
-    this.readTimeoutMs = builder.readTimeoutMs;
-    this.sslSocketFactory = builder.sslSocketFactory;
-    this.sslTrustManager = builder.sslTrustManager;
+    this.client = builder.client;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(connectTimeoutMs, login, organizationKey, password, proxy, proxyLogin, proxyPassword, readTimeoutMs, url, userAgent);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    ServerConfiguration other = (ServerConfiguration) obj;
-
-    return Objects.equals(connectTimeoutMs, other.connectTimeoutMs)
-      && Objects.equals(login, other.login)
-      && Objects.equals(organizationKey, other.organizationKey)
-      && Objects.equals(password, other.password)
-      && Objects.equals(url, other.url)
-      && Objects.equals(userAgent, other.userAgent)
-      && Objects.equals(readTimeoutMs, other.readTimeoutMs)
-      && Objects.equals(proxy, other.proxy)
-      && Objects.equals(proxyLogin, other.proxyLogin)
-      && Objects.equals(proxyPassword, other.proxyPassword);
+  private static String removeTrailingSlash(String url) {
+    return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
   }
 
   public String getUrl() {
@@ -96,52 +48,8 @@ public class ServerConfiguration {
     return organizationKey;
   }
 
-  @CheckForNull
-  public String getUserAgent() {
-    return userAgent;
-  }
-
-  @CheckForNull
-  public String getLogin() {
-    return login;
-  }
-
-  @CheckForNull
-  public X509TrustManager getTrustManager() {
-    return sslTrustManager;
-  }
-
-  @CheckForNull
-  public SSLSocketFactory getSSLSocketFactory() {
-    return sslSocketFactory;
-  }
-
-  @CheckForNull
-  public String getPassword() {
-    return password;
-  }
-
-  @CheckForNull
-  public Proxy getProxy() {
-    return proxy;
-  }
-
-  @CheckForNull
-  public String getProxyLogin() {
-    return proxyLogin;
-  }
-
-  @CheckForNull
-  public String getProxyPassword() {
-    return proxyPassword;
-  }
-
-  public int getConnectTimeoutMs() {
-    return connectTimeoutMs;
-  }
-
-  public int getReadTimeoutMs() {
-    return readTimeoutMs;
+  public HttpClient httpClient() {
+    return client;
   }
 
   public static Builder builder() {
@@ -151,25 +59,13 @@ public class ServerConfiguration {
   public static class Builder {
     private String url;
     private String organizationKey;
-    private String userAgent;
-    private String login;
-    private String password;
-    private Proxy proxy;
-    private String proxyLogin;
-    private String proxyPassword;
-    private int connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MILLISECONDS;
-    private int readTimeoutMs = DEFAULT_READ_TIMEOUT_MILLISECONDS;
-    private SSLSocketFactory sslSocketFactory = null;
-    private X509TrustManager sslTrustManager = null;
+    private HttpClient client;
 
     private Builder() {
     }
 
-    /**
-     * Optional User  Agent
-     */
-    public Builder userAgent(@Nullable String userAgent) {
-      this.userAgent = userAgent;
+    public Builder httpClient(HttpClient client) {
+      this.client = client;
       return this;
     }
 
@@ -190,69 +86,12 @@ public class ServerConfiguration {
       return this;
     }
 
-    public Builder sslSocketFactory(SSLSocketFactory sslSocketFactory) {
-      this.sslSocketFactory = sslSocketFactory;
-      return this;
-    }
-
-    public Builder trustManager(X509TrustManager sslTrustManager) {
-      this.sslTrustManager = sslTrustManager;
-      return this;
-    }
-
-    /**
-     * Optional login/password, for example "admin"
-     */
-    public Builder credentials(@Nullable String login, @Nullable String password) {
-      this.login = login;
-      this.password = password;
-      return this;
-    }
-
-    /**
-     * Optional access token, for example {@code "ABCDE"}. Alternative to {@link #credentials(String, String)}
-     */
-    public Builder token(@Nullable String token) {
-      this.login = token;
-      this.password = null;
-      return this;
-    }
-
-    /**
-     * Sets a specified timeout value, in milliseconds, to be used when opening HTTP connection.
-     * A timeout of zero is interpreted as an infinite timeout. Default value is {@link #DEFAULT_CONNECT_TIMEOUT_MILLISECONDS}
-     */
-    public Builder connectTimeoutMilliseconds(int i) {
-      this.connectTimeoutMs = i;
-      return this;
-    }
-
-    /**
-     * Sets the read timeout to a specified timeout, in milliseconds.
-     * A timeout of zero is interpreted as an infinite timeout. Default value is {@link #DEFAULT_READ_TIMEOUT_MILLISECONDS}
-     */
-    public Builder readTimeoutMilliseconds(int i) {
-      this.readTimeoutMs = i;
-      return this;
-    }
-
-    public Builder proxy(@Nullable Proxy proxy) {
-      this.proxy = proxy;
-      return this;
-    }
-
-    public Builder proxyCredentials(@Nullable String proxyLogin, @Nullable String proxyPassword) {
-      this.proxyLogin = proxyLogin;
-      this.proxyPassword = proxyPassword;
-      return this;
-    }
-
     public ServerConfiguration build() {
       if (url == null) {
         throw new UnsupportedOperationException("Server URL is mandatory");
       }
-      if (userAgent == null) {
-        throw new UnsupportedOperationException("User agent is mandatory");
+      if (client == null) {
+        throw new UnsupportedOperationException("Client is mandatory");
       }
       return new ServerConfiguration(this);
     }

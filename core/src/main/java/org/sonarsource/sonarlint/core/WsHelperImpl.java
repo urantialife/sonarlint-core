@@ -19,10 +19,8 @@
  */
 package org.sonarsource.sonarlint.core;
 
-import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.log.Logger;
@@ -46,7 +44,6 @@ import org.sonarsource.sonarlint.core.container.model.DefaultRemoteOrganization;
 import org.sonarsource.sonarlint.core.container.model.DefaultRemoteProject;
 import org.sonarsource.sonarlint.core.util.ProgressWrapper;
 import org.sonarsource.sonarlint.core.util.StringUtils;
-import org.sonarsource.sonarlint.core.util.ws.WsResponse;
 
 import static java.util.Objects.requireNonNull;
 
@@ -82,32 +79,6 @@ public class WsHelperImpl implements WsHelper {
     return new SonarLintWsClient(serverConfig);
   }
 
-  static String generateAuthenticationToken(ServerVersionAndStatusChecker serverChecker, SonarLintWsClient client, String name, boolean force) {
-    try {
-      // in 5.3 login is mandatory and user needs admin privileges
-      serverChecker.checkVersionAndStatus("5.4");
-
-      if (force) {
-        // revoke
-        client.post("api/user_tokens/revoke?name=" + name);
-      }
-
-      // create
-      try (WsResponse response = client.post("api/user_tokens/generate?name=" + name)) {
-        Map<?, ?> javaRootMapObject = new Gson().fromJson(response.content(), Map.class);
-        return (String) javaRootMapObject.get("token");
-      }
-    } catch (RuntimeException e) {
-      throw SonarLintWrappedException.wrap(e);
-    }
-  }
-
-  @Override
-  public String generateAuthenticationToken(ServerConfiguration serverConfig, String name, boolean force) {
-    SonarLintWsClient client = createClient(serverConfig);
-    return generateAuthenticationToken(new ServerVersionAndStatusChecker(client), client, name, force);
-  }
-
   @Override
   public List<RemoteOrganization> listOrganizations(ServerConfiguration serverConfig, @Nullable ProgressMonitor monitor) {
     SonarLintWsClient client = createClient(serverConfig);
@@ -138,7 +109,7 @@ public class WsHelperImpl implements WsHelper {
 
   public static Optional<ShowWsResponse> fetchComponent(SonarLintWsClient client, String componentKey) {
     return SonarLintWsClient.processTimed(
-      () -> client.rawGet("api/components/show.protobuf?component=" + StringUtils.urlEncode(componentKey)),
+      () -> client.rawGet("/api/components/show.protobuf?component=" + StringUtils.urlEncode(componentKey)),
       response -> {
         if (response.isSuccessful()) {
           return Optional.of(WsComponents.ShowWsResponse.parseFrom(response.contentStream()));
@@ -173,14 +144,14 @@ public class WsHelperImpl implements WsHelper {
   }
 
   private static Optional<RemoteOrganization> fetchOrganization(SonarLintWsClient client, String organizationKey, ProgressWrapper progress) {
-    String url = "api/organizations/search.protobuf?organizations=" + StringUtils.urlEncode(organizationKey);
+    String url = "/api/organizations/search.protobuf?organizations=" + StringUtils.urlEncode(organizationKey);
     return getPaginatedOrganizations(client, url, progress)
       .stream()
       .findFirst();
   }
 
   private static List<RemoteOrganization> fetchOrganizations(SonarLintWsClient client, boolean memberOnly, ProgressWrapper progress) {
-    String url = "api/organizations/search.protobuf";
+    String url = "/api/organizations/search.protobuf";
     if (memberOnly) {
       url += "?member=true";
     }

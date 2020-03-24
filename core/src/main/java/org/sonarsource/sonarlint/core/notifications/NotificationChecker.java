@@ -19,6 +19,10 @@
  */
 package org.sonarsource.sonarlint.core.notifications;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,22 +30,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.annotation.CheckForNull;
-
 import org.sonar.api.utils.DateUtils;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 import org.sonarsource.sonarlint.core.client.api.notifications.SonarQubeNotification;
 import org.sonarsource.sonarlint.core.container.connected.SonarLintWsClient;
 import org.sonarsource.sonarlint.core.container.model.DefaultSonarQubeNotification;
 import org.sonarsource.sonarlint.core.util.StringUtils;
-import org.sonarsource.sonarlint.core.util.ws.WsResponse;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 class NotificationChecker {
   private static final Logger LOG = Loggers.get(NotificationChecker.class);
@@ -61,7 +58,7 @@ class NotificationChecker {
   @CheckForNull
   public List<SonarQubeNotification> request(Map<String, ZonedDateTime> projectTimestamps) {
     String path = getWsPath(projectTimestamps);
-    WsResponse wsResponse = wsClient.rawGet(path);
+    HttpClient.GetResponse wsResponse = wsClient.rawGet(path);
     if (!wsResponse.isSuccessful()) {
       LOG.debug("Failed to get notifications: {}, {}", wsResponse.code(), wsResponse.content());
       return Collections.emptyList();
@@ -75,7 +72,7 @@ class NotificationChecker {
    */
   public boolean isSupported() {
     String path = getWsPath(Collections.emptyMap());
-    WsResponse wsResponse = wsClient.rawGet(path);
+    HttpClient.GetResponse wsResponse = wsClient.rawGet(path);
     return wsResponse.isSuccessful();
   }
 

@@ -45,7 +45,6 @@ import org.sonarsource.sonarlint.core.util.ProgressWrapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class WsHelperImplTest {
@@ -85,44 +84,6 @@ public class WsHelperImplTest {
   @Test(expected = NullPointerException.class)
   public void testNullServerConfig() {
     helper.validateConnection((ServerConfiguration) null);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testNullServerConfigToken() {
-    helper.generateAuthenticationToken((ServerConfiguration) null, "name", true);
-  }
-
-  @Test
-  public void createToken() {
-    String response = "{\n" +
-      "  \"login\": \"token\",\n" +
-      "  \"name\": \"Third Party Application\",\n" +
-      "  \"token\": \"123456789\"\n" +
-      "}";
-    WsClientTestUtils.addPostResponse(client, "api/user_tokens/generate?name=token", response);
-    String token = WsHelperImpl.generateAuthenticationToken(serverChecker, client, "token", true);
-    verify(serverChecker).checkVersionAndStatus("5.4");
-    verify(client).post("api/user_tokens/revoke?name=token");
-    verify(client).post("api/user_tokens/generate?name=token");
-    verifyNoMoreInteractions(client);
-
-    assertThat(token).isEqualTo("123456789");
-  }
-
-  @Test
-  public void createTokenDontForce() {
-    String response = "{\n" +
-      "  \"login\": \"token\",\n" +
-      "  \"name\": \"Third Party Application\",\n" +
-      "  \"token\": \"123456789\"\n" +
-      "}";
-    WsClientTestUtils.addPostResponse(client, "api/user_tokens/generate?name=token", response);
-    String token = WsHelperImpl.generateAuthenticationToken(serverChecker, client, "token", false);
-    verify(serverChecker).checkVersionAndStatus("5.4");
-    verify(client).post("api/user_tokens/generate?name=token");
-    verifyNoMoreInteractions(client);
-
-    assertThat(token).isEqualTo("123456789");
   }
 
   @Test

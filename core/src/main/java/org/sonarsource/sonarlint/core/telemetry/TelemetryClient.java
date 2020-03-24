@@ -19,44 +19,45 @@
  */
 package org.sonarsource.sonarlint.core.telemetry;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonarqube.ws.MediaTypes;
-import org.sonarsource.sonarlint.core.client.api.common.TelemetryClientConfig;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 import org.sonarsource.sonarlint.core.client.api.util.SonarLintUtils;
-import org.sonarsource.sonarlint.core.util.ws.DeleteRequest;
-import org.sonarsource.sonarlint.core.util.ws.HttpConnector;
-import org.sonarsource.sonarlint.core.util.ws.PostRequest;
 
 public class TelemetryClient {
 
   private static final Logger LOG = Loggers.get(TelemetryClient.class);
+  static final String JSON_CONTENT_TYPE = "application/json";
+  static final URL TELEMETRY_ENDPOINT;
 
-  private static final String TELEMETRY_PATH = "telemetry";
+  static {
+    try {
+      TELEMETRY_ENDPOINT = new URL("https://chestnutsl.sonarsource.com/telemetry");
+    } catch (MalformedURLException e) {
+      throw new IllegalStateException("Invalid URL", e);
+    }
+  }
 
-  private final TelemetryHttpFactory httpFactory;
-  private final TelemetryClientConfig clientConfig;
+  private final HttpClient client;
   private final String product;
   private final String version;
   private final String ideVersion;
 
-  public TelemetryClient(TelemetryClientConfig clientConfig, String product, String version, String ideVersion) {
-    this(clientConfig, product, version, ideVersion, new TelemetryHttpFactory());
-  }
-
-  TelemetryClient(TelemetryClientConfig clientConfig, String product, String version, String ideVersion, TelemetryHttpFactory httpFactory) {
-    this.clientConfig = clientConfig;
+  TelemetryClient(String product, String version, String ideVersion, HttpClient client) {
     this.product = product;
     this.version = version;
     this.ideVersion = ideVersion;
-    this.httpFactory = httpFactory;
+    this.client = client;
   }
 
   void upload(TelemetryData data, boolean usesConnectedMode, boolean usesSonarCloud) {
     try {
-      sendPost(httpFactory.buildClient(clientConfig), createPayload(data, usesConnectedMode, usesSonarCloud));
+      TelemetryPayload payload = createPayload(data, usesConnectedMode, usesSonarCloud);
+      client.post(TELEMETRY_ENDPOINT, JSON_CONTENT_TYPE, payload.toJson());
     } catch (Exception e) {
       if (SonarLintUtils.isInternalDebugEnabled()) {
         LOG.error("Failed to upload telemetry data", e);
@@ -66,7 +67,8 @@ public class TelemetryClient {
 
   void optOut(TelemetryData data, boolean usesConnectedMode, boolean usesSonarCloud) {
     try {
-      sendDelete(httpFactory.buildClient(clientConfig), createPayload(data, usesConnectedMode, usesSonarCloud));
+      TelemetryPayload payload = createPayload(data, usesConnectedMode, usesSonarCloud);
+      client.delete(TELEMETRY_ENDPOINT, JSON_CONTENT_TYPE, payload.toJson());
     } catch (Exception e) {
       if (SonarLintUtils.isInternalDebugEnabled()) {
         LOG.error("Failed to upload telemetry opt-out", e);
@@ -82,17 +84,4 @@ public class TelemetryClient {
       usesConnectedMode, usesSonarCloud, systemTime, data.installTime(), analyzers);
   }
 
-  private static void sendDelete(HttpConnector httpConnector, TelemetryPayload payload) {
-    String json = payload.toJson();
-    DeleteRequest post = new DeleteRequest(TELEMETRY_PATH);
-    post.setMediaType(MediaTypes.JSON);
-    httpConnector.delete(post, json).failIfNotSuccessful().close();
-  }
-
-  private static void sendPost(HttpConnector httpConnector, TelemetryPayload payload) {
-    String json = payload.toJson();
-    PostRequest post = new PostRequest(TELEMETRY_PATH);
-    post.setMediaType(MediaTypes.JSON);
-    httpConnector.post(post, json).failIfNotSuccessful().close();
-  }
 }

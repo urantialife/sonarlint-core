@@ -91,14 +91,10 @@ public class OrganizationTest extends AbstractConnectedTest {
 
   @BeforeClass
   public static void prepare() throws IOException {
-    adminWsClient = ConnectedModeTest.newAdminWsClient(ORCHESTRATOR);
+    adminWsClient = newAdminWsClient(ORCHESTRATOR);
     sonarUserHome = temp.newFolder().toPath();
 
-    adminWsClient.users().create(org.sonarqube.ws.client.user.CreateRequest.builder()
-      .setLogin(SONARLINT_USER)
-      .setPassword(SONARLINT_PWD)
-      .setName("SonarLint")
-      .build());
+    createSonarLintUser(adminWsClient);
 
     enableOrganizationsSupport();
     createOrganization();
@@ -228,8 +224,7 @@ public class OrganizationTest extends AbstractConnectedTest {
     return ServerConfiguration.builder()
       .url(ORCHESTRATOR.getServer().getUrl())
       .organizationKey(orgKey)
-      .userAgent("SonarLint ITs")
-      .credentials(SONARLINT_USER, SONARLINT_PWD)
+      .httpClient(client)
       .build();
   }
 

@@ -20,18 +20,14 @@
 package org.sonarsource.sonarlint.core;
 
 import com.google.protobuf.Message;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 import org.sonarsource.sonarlint.core.container.connected.SonarLintWsClient;
-import org.sonarsource.sonarlint.core.util.ws.WsResponse;
 
 import static java.util.Objects.requireNonNull;
 import static org.mockito.Mockito.mock;
@@ -46,30 +42,27 @@ public class WsClientTestUtils {
 
   public static SonarLintWsClient createMock() {
     SonarLintWsClient wsClient = mock(SonarLintWsClient.class);
-    when(wsClient.getUserAgent()).thenReturn("UT");
     return wsClient;
   }
 
   public static SonarLintWsClient addResponse(SonarLintWsClient wsClient, String url, String response) {
-    WsResponse wsResponse = mock(WsResponse.class);
+    HttpClient.GetResponse wsResponse = mock(HttpClient.GetResponse.class);
     when(wsClient.get(url)).thenReturn(wsResponse);
     when(wsClient.rawGet(url)).thenReturn(wsResponse);
-    when(wsResponse.requestUrl()).thenReturn(url);
     when(wsResponse.content()).thenReturn(response).thenThrow(new IllegalStateException("Should not call content() twice"));
     when(wsResponse.contentStream()).thenReturn(new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8)));
-    when(wsResponse.contentReader()).thenReturn(new StringReader(response));
-    when(wsResponse.isSuccessful()).thenReturn(true);
+    when(wsResponse.code()).thenReturn(200);
+    when(wsResponse.isSuccessful()).thenCallRealMethod();
     return wsClient;
   }
 
   public static SonarLintWsClient addResponse(SonarLintWsClient wsClient, String url, InputStream inputStream) {
-    WsResponse wsResponse = mock(WsResponse.class);
+    HttpClient.GetResponse wsResponse = mock(HttpClient.GetResponse.class);
     when(wsClient.get(url)).thenReturn(wsResponse);
     when(wsClient.rawGet(url)).thenReturn(wsResponse);
     when(wsResponse.code()).thenReturn(200);
-    when(wsResponse.requestUrl()).thenReturn(url);
+    when(wsResponse.isSuccessful()).thenCallRealMethod();
     when(wsResponse.contentStream()).thenReturn(inputStream);
-    when(wsResponse.isSuccessful()).thenReturn(true);
     return wsClient;
   }
 
@@ -80,28 +73,16 @@ public class WsClientTestUtils {
     }
   }
 
-  public static SonarLintWsClient addPostResponse(SonarLintWsClient wsClient, String url, String response) {
-    WsResponse wsResponse = mock(WsResponse.class);
-    when(wsClient.post(url)).thenReturn(wsResponse);
-    when(wsClient.rawPost(url)).thenReturn(wsResponse);
-    when(wsResponse.requestUrl()).thenReturn(url);
-    when(wsResponse.content()).thenReturn(response).thenThrow(new IllegalStateException("Should not call content() twice"));
-    when(wsResponse.isSuccessful()).thenReturn(true);
-    return wsClient;
-  }
-
   public static SonarLintWsClient addFailedResponse(SonarLintWsClient wsClient, String url, int errorCode, @Nullable String errorMsg) {
-    WsResponse wsResponse = mock(WsResponse.class);
+    HttpClient.GetResponse wsResponse = mock(HttpClient.GetResponse.class);
     IllegalStateException ex = new IllegalStateException(
       "Error " + errorCode + " on " + url + (errorMsg != null ? (": " + errorMsg) : ""));
 
     when(wsClient.get(url)).thenThrow(ex);
     when(wsClient.rawGet(url)).thenReturn(wsResponse);
     when(wsResponse.content()).thenReturn(errorMsg).thenThrow(new IllegalStateException("Should not call content() twice"));
-    when(wsResponse.hasContent()).thenReturn(errorMsg != null);
-    when(wsResponse.requestUrl()).thenReturn(url);
-    when(wsResponse.isSuccessful()).thenReturn(false);
     when(wsResponse.code()).thenReturn(errorCode);
+    when(wsResponse.isSuccessful()).thenCallRealMethod();
     return wsClient;
   }
 
@@ -111,37 +92,12 @@ public class WsClientTestUtils {
   }
 
   public static SonarLintWsClient addStreamResponse(SonarLintWsClient wsClient, String url, String resourcePath) {
-    WsResponse wsResponse = mock(WsResponse.class);
+    HttpClient.GetResponse wsResponse = mock(HttpClient.GetResponse.class);
     when(wsClient.get(url)).thenReturn(wsResponse);
     when(wsClient.rawGet(url)).thenReturn(wsResponse);
-    when(wsResponse.requestUrl()).thenReturn(url);
     when(wsResponse.contentStream()).thenReturn(requireNonNull(WsClientTestUtils.class.getResourceAsStream(resourcePath)));
-    when(wsResponse.isSuccessful()).thenReturn(true);
-    return wsClient;
-  }
-
-  public static SonarLintWsClient addReaderResponse(SonarLintWsClient wsClient, String url, String resourcePath) {
-    WsResponse wsResponse = mock(WsResponse.class);
-    when(wsClient.get(url)).thenReturn(wsResponse);
-    when(wsClient.rawGet(url)).thenReturn(wsResponse);
-    when(wsResponse.requestUrl()).thenReturn(url);
-    InputStream is = requireNonNull(WsClientTestUtils.class.getResourceAsStream(resourcePath));
-    when(wsResponse.contentReader()).thenReturn(new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8)));
-    when(wsResponse.isSuccessful()).thenReturn(true);
-    return wsClient;
-  }
-
-  public static SonarLintWsClient createMockWithReaderResponse(String url, Reader reader) {
-    SonarLintWsClient wsClient = createMock();
-    return addReaderResponse(wsClient, url, reader);
-  }
-
-  public static SonarLintWsClient addReaderResponse(SonarLintWsClient wsClient, String url, Reader reader) {
-    WsResponse wsResponse = mock(WsResponse.class);
-    when(wsClient.get(url)).thenReturn(wsResponse);
-    when(wsResponse.requestUrl()).thenReturn(url);
-    when(wsResponse.contentReader()).thenReturn(reader);
-    when(wsResponse.isSuccessful()).thenReturn(true);
+    when(wsResponse.code()).thenReturn(200);
+    when(wsResponse.isSuccessful()).thenCallRealMethod();
     return wsClient;
   }
 

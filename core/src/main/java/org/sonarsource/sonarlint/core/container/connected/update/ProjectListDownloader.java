@@ -31,7 +31,7 @@ import org.sonarsource.sonarlint.core.util.StringUtils;
 
 public class ProjectListDownloader {
 
-  private static final String PROJECT_SEARCH_URL = "api/components/search.protobuf?qualifiers=TRK";
+  private static final String PROJECT_SEARCH_URL = "/api/components/search.protobuf?qualifiers=TRK";
   private final SonarLintWsClient wsClient;
 
   public ProjectListDownloader(SonarLintWsClient wsClient) {

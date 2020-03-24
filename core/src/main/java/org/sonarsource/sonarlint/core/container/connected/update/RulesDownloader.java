@@ -34,6 +34,7 @@ import org.sonarqube.ws.Rules.Active.Param;
 import org.sonarqube.ws.Rules.ActiveList;
 import org.sonarqube.ws.Rules.Rule;
 import org.sonarqube.ws.Rules.SearchResponse;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 import org.sonarsource.sonarlint.core.client.api.util.FileUtils;
 import org.sonarsource.sonarlint.core.container.connected.SonarLintWsClient;
 import org.sonarsource.sonarlint.core.container.storage.ProtobufUtil;
@@ -43,7 +44,6 @@ import org.sonarsource.sonarlint.core.proto.Sonarlint.Rules;
 import org.sonarsource.sonarlint.core.proto.Sonarlint.Rules.Rule.Builder;
 import org.sonarsource.sonarlint.core.util.ProgressWrapper;
 import org.sonarsource.sonarlint.core.util.StringUtils;
-import org.sonarsource.sonarlint.core.util.ws.WsResponse;
 
 import static org.sonarsource.sonarlint.core.container.storage.StoragePaths.encodeForFs;
 
@@ -112,7 +112,7 @@ public class RulesDownloader {
     return builder.toString();
   }
 
-  private static SearchResponse loadFromStream(WsResponse response) {
+  private static SearchResponse loadFromStream(HttpClient.GetResponse response) {
     try (InputStream is = response.contentStream()) {
       return SearchResponse.parseFrom(is);
     } catch (IOException e) {

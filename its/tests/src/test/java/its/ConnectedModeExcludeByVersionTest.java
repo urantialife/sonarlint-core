@@ -33,7 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
-import org.sonar.wsclient.user.UserParameters;
+import org.sonarqube.ws.client.WsClient;
 import org.sonarsource.sonarlint.core.ConnectedSonarLintEngineImpl;
 import org.sonarsource.sonarlint.core.WsHelperImpl;
 import org.sonarsource.sonarlint.core.client.api.common.Language;
@@ -76,16 +76,14 @@ public class ConnectedModeExcludeByVersionTest extends AbstractConnectedTest {
   private ConnectedSonarLintEngine engine;
   private List<String> logs = new ArrayList<>();
 
+  private WsClient adminWsClient;
+
   @Before
   public void prepare() throws Exception {
     sonarUserHome = temp.newFolder().toPath();
 
-    ORCHESTRATOR.getServer().adminWsClient().userClient()
-      .create(UserParameters.create()
-        .login(SONARLINT_USER)
-        .password(SONARLINT_PWD)
-        .passwordConfirmation(SONARLINT_PWD)
-        .name("SonarLint"));
+    adminWsClient = newAdminWsClient(ORCHESTRATOR);
+    createSonarLintUser(adminWsClient);
   }
 
   private ConnectedSonarLintEngine createEngine(Consumer<ConnectedGlobalConfiguration.Builder> configurator) {
@@ -128,8 +126,7 @@ public class ConnectedModeExcludeByVersionTest extends AbstractConnectedTest {
   private ServerConfiguration config() {
     return ServerConfiguration.builder()
       .url(ORCHESTRATOR.getServer().getUrl())
-      .userAgent("SonarLint ITs")
-      .credentials(SONARLINT_USER, SONARLINT_PWD)
+      .httpClient(client)
       .build();
   }
 }

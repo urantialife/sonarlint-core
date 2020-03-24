@@ -103,7 +103,7 @@ public class PluginReferencesDownloader {
       String url;
 
       if (serverVersion.compareTo(Version.create("7.2")) >= 0) {
-        url = "api/plugins/download?plugin=" + key;
+        url = "/api/plugins/download?plugin=" + key;
       } else {
         url = format("/deploy/plugins/%s/%s", key, filename);
       }

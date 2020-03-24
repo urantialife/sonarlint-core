@@ -19,12 +19,8 @@
  */
 package org.sonarsource.sonarlint.core.client.api.connected;
 
-import java.net.Proxy;
-
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
-
 import org.junit.Test;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -43,102 +39,38 @@ public class ServerConfigurationTest {
   }
 
   @Test
-  public void builder_user_agent_mandatory() {
+  public void builder_http_client_mandatory() {
     try {
       ServerConfiguration.builder()
         .url("http://foo")
         .build();
       fail("Expected exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("User agent is mandatory");
+      assertThat(e).hasMessage("Client is mandatory");
     }
   }
 
   @Test
-  public void equals_hash() {
-    ServerConfiguration config1 = ServerConfiguration.builder()
-      .url("http://foo")
-      .userAgent("agent")
-      .build();
-
-    ServerConfiguration config2 = ServerConfiguration.builder()
-      .url("http://foo")
-      .userAgent("agent2")
-      .build();
-
-    ServerConfiguration config3 = ServerConfiguration.builder()
-      .url("http://foo")
-      .userAgent("agent2")
-      .proxyCredentials("proxyLogin", "proxyPass")
-      .build();
-    
-    ServerConfiguration config4 = ServerConfiguration.builder()
-      .url("http://foo")
-      .userAgent("agent")
-      .build();
-
-    assertThat(config1.equals(config2)).isFalse();
-    assertThat(config1.equals(config3)).isFalse();
-    assertThat(config1.equals(new Object())).isFalse();
-    assertThat(config1.equals(config1)).isTrue();
-    assertThat(config1.equals(config4)).isTrue();
-    assertThat(config1.hashCode()).isEqualTo(config4.hashCode());
-
-
-
-  }
-
-  @Test
   public void minimal_builder() {
+    HttpClient httpClient = mock(HttpClient.class);
     ServerConfiguration config = ServerConfiguration.builder()
       .url("http://foo")
-      .userAgent("agent")
+      .httpClient(httpClient)
       .build();
     assertThat(config.getUrl()).isEqualTo("http://foo");
-    assertThat(config.getUserAgent()).isEqualTo("agent");
+    assertThat(config.httpClient()).isSameAs(httpClient);
   }
 
   @Test
   public void max_builder() {
-    Proxy proxy = mock(Proxy.class);
-    X509TrustManager trustManager = mock(X509TrustManager.class);
-    SSLSocketFactory socketFactory = mock(SSLSocketFactory.class);
+    HttpClient httpClient = mock(HttpClient.class);
     ServerConfiguration config = ServerConfiguration.builder()
       .url("http://foo")
-      .userAgent("agent")
-      .credentials("user", "pwd")
-      .proxy(proxy)
-      .sslSocketFactory(socketFactory)
-      .trustManager(trustManager)
-      .proxyCredentials("proxyUser", "proxyPwd")
-      .readTimeoutMilliseconds(10)
-      .connectTimeoutMilliseconds(20)
       .organizationKey("org")
+      .httpClient(httpClient)
       .build();
-    assertThat(config.getSSLSocketFactory()).isEqualTo(socketFactory);
-    assertThat(config.getTrustManager()).isEqualTo(trustManager);
     assertThat(config.getUrl()).isEqualTo("http://foo");
-    assertThat(config.getUserAgent()).isEqualTo("agent");
-    assertThat(config.getLogin()).isEqualTo("user");
-    assertThat(config.getPassword()).isEqualTo("pwd");
-    assertThat(config.getProxy()).isEqualTo(proxy);
-    assertThat(config.getProxyLogin()).isEqualTo("proxyUser");
-    assertThat(config.getProxyPassword()).isEqualTo("proxyPwd");
-    assertThat(config.getReadTimeoutMs()).isEqualTo(10);
-    assertThat(config.getConnectTimeoutMs()).isEqualTo(20);
     assertThat(config.getOrganizationKey()).isEqualTo("org");
-  }
-
-  @Test
-  public void use_token() {
-    ServerConfiguration config = ServerConfiguration.builder()
-      .url("http://foo")
-      .userAgent("agent")
-      .token("foo")
-      .build();
-    assertThat(config.getUrl()).isEqualTo("http://foo");
-    assertThat(config.getUserAgent()).isEqualTo("agent");
-    assertThat(config.getLogin()).isEqualTo("foo");
-    assertThat(config.getPassword()).isNull();
+    assertThat(config.httpClient()).isSameAs(httpClient);
   }
 }

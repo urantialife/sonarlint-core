@@ -455,15 +455,6 @@ public class SonarCloudTest extends AbstractConnectedTest {
   }
 
   @Test
-  public void generateToken() {
-    WsHelper ws = new WsHelperImpl();
-    ServerConfiguration serverConfig = getServerConfig();
-
-    String token = ws.generateAuthenticationToken(serverConfig, "test-its", true);
-    assertThat(token).isNotNull();
-  }
-
-  @Test
   public void checkForUpdate() {
     updateGlobal();
     updateProject(projectKey(PROJECT_KEY_JAVA));
@@ -582,9 +573,8 @@ public class SonarCloudTest extends AbstractConnectedTest {
   private ServerConfiguration getServerConfig() {
     return ServerConfiguration.builder()
       .url(SONARCLOUD_STAGING_URL)
-      .userAgent("SonarLint ITs")
       .organizationKey(SONARCLOUD_ORGANIZATION)
-      .credentials(SONARCLOUD_USER, SONARCLOUD_PASSWORD)
+      .httpClient(client)
       .build();
   }
 

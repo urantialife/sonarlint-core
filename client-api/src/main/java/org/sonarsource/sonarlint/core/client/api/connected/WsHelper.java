@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.sonarsource.sonarlint.core.client.api.common.ProgressMonitor;
-import org.sonarsource.sonarlint.core.client.api.exceptions.UnsupportedServerException;
 
 public interface WsHelper {
   /**
@@ -31,16 +30,6 @@ public interface WsHelper {
    * @since 2.1
    */
   ValidationResult validateConnection(ServerConfiguration serverConfig);
-
-  /**
-   * Create authentication token with the provided server configuration
-   * @since 2.1
-   * @param force Whether it should revoke any existing token with the same name, or fail if it exists.
-   * @throws UnsupportedServerException if SonarQube server version &lt; 5.3
-   * @throws IllegalStateException for other errors, for example if server is not ready or if a token with the given name already exists 
-   * and force is not set to true
-   */
-  String generateAuthenticationToken(ServerConfiguration serverConfig, String name, boolean force);
 
   /**
    * Returns the list of remote organizations

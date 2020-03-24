@@ -78,7 +78,7 @@ public class GlobalStorageUpdateExecutorTest {
     when(tempFolder.newDir()).thenReturn(tempDir);
     storageManager = mock(StoragePaths.class);
     when(storageManager.getGlobalStorageRoot()).thenReturn(destDir.toPath());
-    globalUpdate = new GlobalStorageUpdateExecutor(storageManager, wsClient, new ServerVersionAndStatusChecker(wsClient),
+    globalUpdate = new GlobalStorageUpdateExecutor(storageManager, new ServerVersionAndStatusChecker(wsClient),
       mock(PluginReferencesDownloader.class), mock(SettingsDownloader.class), rulesDownloader, mock(ProjectListDownloader.class),
       mock(QualityProfilesDownloader.class), mock(PluginListDownloader.class), tempFolder);
   }
@@ -88,7 +88,6 @@ public class GlobalStorageUpdateExecutorTest {
     globalUpdate.update(new ProgressWrapper(null));
 
     StorageStatus updateStatus = ProtobufUtil.readFile(destDir.toPath().resolve(StoragePaths.STORAGE_STATUS_PB), StorageStatus.parser());
-    assertThat(updateStatus.getClientUserAgent()).isEqualTo("UT");
     assertThat(updateStatus.getSonarlintCoreVersion()).isEqualTo(VersionUtils.getLibraryVersion());
     assertThat(updateStatus.getUpdateTimestamp()).isNotEqualTo(0);
 

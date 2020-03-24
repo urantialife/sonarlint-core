@@ -28,7 +28,6 @@ import io.netty.util.internal.logging.JdkLoggerFactory;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import org.sonarlint.daemon.interceptors.ExceptionInterceptor;
-import org.sonarlint.daemon.services.ConnectedSonarLintImpl;
 import org.sonarlint.daemon.services.StandaloneSonarLintImpl;
 
 public class Daemon {
@@ -73,7 +72,6 @@ public class Daemon {
       ServerInterceptor interceptor = new ExceptionInterceptor();
 
       server = NettyServerBuilder.forAddress(new InetSocketAddress("localhost", port))
-        .addService(ServerInterceptors.intercept(new ConnectedSonarLintImpl(this), interceptor))
         .addService(ServerInterceptors.intercept(new StandaloneSonarLintImpl(this, Utils.getAnalyzers(sonarlintHome)), interceptor))
         .build()
         .start();

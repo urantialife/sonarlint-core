@@ -57,13 +57,10 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.wsclient.services.PropertyCreateQuery;
 import org.sonar.wsclient.services.PropertyDeleteQuery;
-import org.sonar.wsclient.user.UserParameters;
 import org.sonarqube.ws.QualityProfiles.SearchWsResponse;
 import org.sonarqube.ws.QualityProfiles.SearchWsResponse.QualityProfile;
-import org.sonarqube.ws.client.HttpConnector;
 import org.sonarqube.ws.client.PostRequest;
 import org.sonarqube.ws.client.WsClient;
-import org.sonarqube.ws.client.WsClientFactories;
 import org.sonarqube.ws.client.WsRequest;
 import org.sonarqube.ws.client.WsResponse;
 import org.sonarqube.ws.client.permission.RemoveGroupWsRequest;
@@ -167,12 +164,7 @@ public class ConnectedModeTest extends AbstractConnectedTest {
 
     removeGroupPermission("anyone", "scan");
 
-    ORCHESTRATOR.getServer().adminWsClient().userClient()
-      .create(UserParameters.create()
-        .login(SONARLINT_USER)
-        .password(SONARLINT_PWD)
-        .passwordConfirmation(SONARLINT_PWD)
-        .name("SonarLint"));
+    createSonarLintUser(adminWsClient);
 
     ORCHESTRATOR.getServer().provisionProject(PROJECT_KEY_JAVA, "Sample Java");
     ORCHESTRATOR.getServer().provisionProject(PROJECT_KEY_JAVA_PACKAGE, "Sample Java Package");
@@ -299,7 +291,7 @@ public class ConnectedModeTest extends AbstractConnectedTest {
     try {
       engine.update(ServerConfiguration.builder()
         .url(ORCHESTRATOR.getServer().getUrl())
-        .userAgent("SonarLint ITs")
+        .httpClient(new JdkHttpClientImplementation(false))
         .build(), null);
       fail("Exception expected");
     } catch (Exception e) {
@@ -648,18 +640,6 @@ public class ConnectedModeTest extends AbstractConnectedTest {
   }
 
   @Test
-  public void generateToken() {
-    WsHelper ws = new WsHelperImpl();
-    ServerConfiguration serverConfig = getServerConfig(true);
-
-    String token = ws.generateAuthenticationToken(serverConfig, "name", false);
-    assertThat(token).isNotNull();
-
-    token = ws.generateAuthenticationToken(serverConfig, "name", true);
-    assertThat(token).isNotNull();
-  }
-
-  @Test
   public void checkForUpdate() {
     updateGlobal();
     updateProject(PROJECT_KEY_JAVA);
@@ -809,8 +789,7 @@ public class ConnectedModeTest extends AbstractConnectedTest {
   private ServerConfiguration getServerConfig(boolean redirect) {
     return ServerConfiguration.builder()
       .url(redirect ? ("http://localhost:" + redirectPort) : ORCHESTRATOR.getServer().getUrl())
-      .userAgent("SonarLint ITs")
-      .credentials(SONARLINT_USER, SONARLINT_PWD)
+      .httpClient(client)
       .build();
   }
 
@@ -818,13 +797,5 @@ public class ConnectedModeTest extends AbstractConnectedTest {
     adminWsClient.permissions().removeGroup(new RemoveGroupWsRequest()
       .setGroupName(groupName)
       .setPermission(permission));
-  }
-
-  public static WsClient newAdminWsClient(Orchestrator orchestrator) {
-    com.sonar.orchestrator.container.Server server = orchestrator.getServer();
-    return WsClientFactories.getDefault().newClient(HttpConnector.newBuilder()
-      .url(server.getUrl())
-      .credentials(com.sonar.orchestrator.container.Server.ADMIN_LOGIN, com.sonar.orchestrator.container.Server.ADMIN_PASSWORD)
-      .build());
   }
 }

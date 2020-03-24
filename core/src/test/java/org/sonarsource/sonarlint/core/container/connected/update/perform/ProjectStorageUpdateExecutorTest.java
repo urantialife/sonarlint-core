@@ -45,6 +45,7 @@ import org.sonar.scanner.protocol.input.ScannerInput;
 import org.sonarqube.ws.Settings.Setting;
 import org.sonarqube.ws.Settings.ValuesWsResponse;
 import org.sonarsource.sonarlint.core.WsClientTestUtils;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 import org.sonarsource.sonarlint.core.container.connected.InMemoryIssueStore;
 import org.sonarsource.sonarlint.core.container.connected.IssueStore;
 import org.sonarsource.sonarlint.core.container.connected.IssueStoreFactory;
@@ -65,7 +66,6 @@ import org.sonarsource.sonarlint.core.proto.Sonarlint.QProfiles;
 import org.sonarsource.sonarlint.core.proto.Sonarlint.ServerInfos;
 import org.sonarsource.sonarlint.core.util.ProgressWrapper;
 import org.sonarsource.sonarlint.core.util.StringUtils;
-import org.sonarsource.sonarlint.core.util.ws.WsResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -155,14 +155,14 @@ public class ProjectStorageUpdateExecutorTest {
 
     projectConfigurationDownloader = new ProjectConfigurationDownloader(moduleHierarchy, new ProjectQualityProfilesDownloader(wsClient), mock(SettingsDownloader.class));
 
-    projectUpdate = new ProjectStorageUpdateExecutor(storageReader, storagePaths, wsClient, tempFolder,
+    projectUpdate = new ProjectStorageUpdateExecutor(storageReader, storagePaths, tempFolder,
       projectConfigurationDownloader, projectFileListDownloader, serverIssueUpdater);
   }
 
   @Test
   public void exception_ws_load_qps() throws IOException {
     // return trash from WS
-    WsResponse response = mock(WsResponse.class);
+    HttpClient.GetResponse response = mock(HttpClient.GetResponse.class);
     when(response.contentStream()).thenReturn(new ByteArrayInputStream(new byte[] {0, 1, 2}));
     when(wsClient.get(getQualityProfileUrl())).thenReturn(response);
     File destDir = temp.newFolder();
@@ -249,7 +249,7 @@ public class ProjectStorageUpdateExecutorTest {
 
     IssueDownloader issueDownloader = projectKey -> Arrays.asList(fileIssue1, fileIssue2, anotherFileIssue);
 
-    projectUpdate = new ProjectStorageUpdateExecutor(storageReader, storagePaths, wsClient, tempFolder, projectConfigurationDownloader,
+    projectUpdate = new ProjectStorageUpdateExecutor(storageReader, storagePaths, tempFolder, projectConfigurationDownloader,
       projectFileListDownloader, serverIssueUpdater);
     projectUpdate.update(MODULE_KEY_WITH_BRANCH, new ProgressWrapper(null));
 
@@ -262,7 +262,7 @@ public class ProjectStorageUpdateExecutorTest {
   @Test
   public void test_update_components() {
     Path temp = tempFolder.newDir().toPath();
-    projectUpdate = new ProjectStorageUpdateExecutor(storageReader, storagePaths, wsClient, tempFolder, projectConfigurationDownloader,
+    projectUpdate = new ProjectStorageUpdateExecutor(storageReader, storagePaths, tempFolder, projectConfigurationDownloader,
       projectFileListDownloader, serverIssueUpdater);
     ProjectConfiguration.Builder projectConfigurationBuilder = ProjectConfiguration.newBuilder();
     projectConfigurationBuilder.getMutableModulePathByKey().put("rootModule", "");

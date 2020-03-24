@@ -19,30 +19,29 @@
  */
 package org.sonarsource.sonarlint.core.telemetry;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
-import org.mockito.Mockito;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
-import org.sonarsource.sonarlint.core.client.api.common.TelemetryClientConfig;
-import org.sonarsource.sonarlint.core.util.ws.DeleteRequest;
-import org.sonarsource.sonarlint.core.util.ws.HttpConnector;
-import org.sonarsource.sonarlint.core.util.ws.PostRequest;
+import org.sonarsource.sonarlint.core.client.api.common.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class TelemetryClientTest {
   private TelemetryClient client;
-  private HttpConnector http;
+  private HttpClient http;
 
   @Rule
   public final EnvironmentVariables env = new EnvironmentVariables();
@@ -52,10 +51,8 @@ public class TelemetryClientTest {
 
   @Before
   public void setUp() {
-    http = mock(HttpConnector.class, RETURNS_DEEP_STUBS);
-    TelemetryHttpFactory httpFactory = mock(TelemetryHttpFactory.class, RETURNS_DEEP_STUBS);
-    when(httpFactory.buildClient(any(TelemetryClientConfig.class))).thenReturn(http);
-    client = new TelemetryClient(mock(TelemetryClientConfig.class), "product", "version", "ideversion", httpFactory);
+    http = mock(HttpClient.class);
+    client = new TelemetryClient("product", "version", "ideversion", http);
   }
 
   @AfterClass
@@ -65,33 +62,37 @@ public class TelemetryClientTest {
   }
 
   @Test
-  public void opt_out() {
+  public void opt_out() throws MalformedURLException {
     client.optOut(new TelemetryData(), true, true);
-    verify(http).delete(any(DeleteRequest.class), Mockito.anyString());
+    verify(http).delete(eq(TelemetryClient.TELEMETRY_ENDPOINT), eq(TelemetryClient.JSON_CONTENT_TYPE), matches(
+      "\\{\"days_since_installation\":0,\"days_of_use\":0,\"sonarlint_version\":\"version\",\"sonarlint_product\":\"product\",\"ide_version\":\"ideversion\",\"connected_mode_used\":true,\"connected_mode_sonarcloud\":true,"
+        + "\"system_time\":\"(.*)\",\"install_time\":\"(.*)\",\"analyses\":\\[\\]\\}"));
   }
 
   @Test
   public void upload() {
     client.upload(new TelemetryData(), true, true);
-    verify(http).post(any(PostRequest.class), Mockito.anyString());
+    verify(http).post(eq(TelemetryClient.TELEMETRY_ENDPOINT), eq(TelemetryClient.JSON_CONTENT_TYPE), matches(
+      "\\{\"days_since_installation\":0,\"days_of_use\":0,\"sonarlint_version\":\"version\",\"sonarlint_product\":\"product\",\"ide_version\":\"ideversion\",\"connected_mode_used\":true,\"connected_mode_sonarcloud\":true,"
+        + "\"system_time\":\"(.*)\",\"install_time\":\"(.*)\",\"analyses\":\\[\\]\\}"));
   }
 
   @Test
   public void should_not_crash_when_cannot_upload() {
-    when(http.post(any(PostRequest.class), anyString())).thenThrow(new RuntimeException());
+    doThrow(new RuntimeException()).when(http).post(any(URL.class), anyString(), anyString());
     client.upload(new TelemetryData(), true, true);
   }
 
   @Test
   public void should_not_crash_when_cannot_opt_out() {
-    when(http.delete(any(DeleteRequest.class), anyString())).thenThrow(new RuntimeException());
+    doThrow(new RuntimeException()).when(http).delete(any(URL.class), anyString(), anyString());
     client.optOut(new TelemetryData(), true, true);
   }
 
   @Test
   public void failed_upload_should_log_if_debug() {
     env.set("SONARLINT_INTERNAL_DEBUG", "true");
-    when(http.post(any(PostRequest.class), anyString())).thenThrow(new IllegalStateException("msg"));
+    doThrow(new IllegalStateException("msg")).when(http).post(any(URL.class), anyString(), anyString());
     client.upload(new TelemetryData(), true, true);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to upload telemetry data");
   }
@@ -99,7 +100,7 @@ public class TelemetryClientTest {
   @Test
   public void failed_optout_should_log_if_debug() {
     env.set("SONARLINT_INTERNAL_DEBUG", "true");
-    when(http.delete(any(DeleteRequest.class), anyString())).thenThrow(new IllegalStateException("msg"));
+    doThrow(new IllegalStateException("msg")).when(http).delete(any(URL.class), anyString(), anyString());
     client.optOut(new TelemetryData(), true, true);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to upload telemetry opt-out");
   }

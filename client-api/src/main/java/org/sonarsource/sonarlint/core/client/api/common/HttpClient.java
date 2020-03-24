@@ -1,5 +1,5 @@
 /*
- * SonarLint Core - Implementation
+ * SonarLint Core - Client API
  * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
@@ -17,34 +17,43 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonarsource.sonarlint.core.util.ws;
+package org.sonarsource.sonarlint.core.client.api.common;
 
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import java.io.InputStream;
+import java.net.URL;
+import javax.annotation.CheckForNull;
 
-abstract class BaseResponse implements WsResponse {
+/**
+ * A facade to execute Http request using the IDE framework.
+ *
+ */
+public interface HttpClient {
 
-  @Override
-  public boolean isSuccessful() {
-    return code() >= 200 && code() < 300;
-  }
+  void delete(URL endpoint, String contentType, String body);
 
-  @Override
-  public WsResponse failIfNotSuccessful() {
-    if (!isSuccessful()) {
-      String content = content();
-      close();
-      throw new HttpException(requestUrl(), code(), content);
+  void post(URL endpoint, String contentType, String body);
+
+  GetResponse get(URL endpoint);
+
+  interface GetResponse extends AutoCloseable {
+
+    default boolean isSuccessful() {
+      return code() >= 200 && code() < 300;
     }
-    return this;
+
+    int code();
+
+    InputStream contentStream();
+
+    @CheckForNull
+    String content();
+
+    // Remove the checked Exception
+    @Override
+    void close();
+
+    URL url();
+
   }
 
-  @Override
-  public boolean hasContent() {
-    return code() != HTTP_NO_CONTENT;
-  }
-  
-  @Override
-  public void close() {
-    // override if needed
-  }
 }
