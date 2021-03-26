@@ -36,11 +36,13 @@ public abstract class AbstractAnalysisConfiguration {
   private final Iterable<ClientInputFile> inputFiles;
   private final Map<String, String> extraProperties;
   private final Path baseDir;
+  private final ClientFileWalker clientFileWalker;
 
   protected AbstractAnalysisConfiguration(AbstractBuilder<?> builder) {
     this.baseDir = builder.baseDir;
     this.inputFiles = builder.inputFiles;
     this.extraProperties = builder.extraProperties;
+    this.clientFileWalker = builder.clientFileWalker;
   }
 
   public Map<String, String> extraProperties() {
@@ -49,6 +51,10 @@ public abstract class AbstractAnalysisConfiguration {
 
   public Path baseDir() {
     return baseDir;
+  }
+
+  public ClientFileWalker clientFileWalker() {
+    return clientFileWalker;
   }
 
   public Iterable<ClientInputFile> inputFiles() {
@@ -83,6 +89,7 @@ public abstract class AbstractAnalysisConfiguration {
   }
 
   public abstract static class AbstractBuilder<G extends AbstractBuilder<G>> {
+    private ClientFileWalker clientFileWalker;
     private List<ClientInputFile> inputFiles = new ArrayList<>();
     private Map<String, String> extraProperties = new HashMap<>();
     private Path baseDir;
@@ -117,5 +124,9 @@ public abstract class AbstractAnalysisConfiguration {
       return (G) this;
     }
 
+    public G setClientFileWalker(ClientFileWalker clientFileWalker) {
+      this.clientFileWalker = clientFileWalker;
+      return (G) this;
+    }
   }
 }

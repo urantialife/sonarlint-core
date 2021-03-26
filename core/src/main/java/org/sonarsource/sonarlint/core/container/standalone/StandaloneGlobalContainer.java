@@ -33,6 +33,7 @@ import org.sonar.api.utils.UriReader;
 import org.sonar.api.utils.Version;
 import org.sonarsource.sonarlint.core.NodeJsHelper;
 import org.sonarsource.sonarlint.core.analyzer.sensor.SensorsExecutor;
+import org.sonarsource.sonarlint.core.client.api.common.ClientFileWalker;
 import org.sonarsource.sonarlint.core.client.api.common.PluginDetails;
 import org.sonarsource.sonarlint.core.client.api.common.RuleKey;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.AnalysisResults;
@@ -137,6 +138,10 @@ public class StandaloneGlobalContainer extends ComponentContainer {
   public AnalysisResults analyze(StandaloneAnalysisConfiguration configuration, IssueListener issueListener, ProgressWrapper progress) {
     AnalysisContainer analysisContainer = new AnalysisContainer(globalExtensionContainer, progress);
     analysisContainer.add(configuration);
+    ClientFileWalker clientFileWalker = configuration.clientFileWalker();
+    if (clientFileWalker != null) {
+      analysisContainer.add(clientFileWalker);
+    }
     analysisContainer.add(issueListener);
     analysisContainer.add(rules);
     Set<String> excludedRules = configuration.excludedRules().stream().map(RuleKey::toString).collect(Collectors.toSet());

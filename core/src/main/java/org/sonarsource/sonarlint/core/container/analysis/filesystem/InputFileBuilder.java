@@ -44,7 +44,7 @@ public class InputFileBuilder {
     return langDetection;
   }
 
-  SonarLintInputFile create(ClientInputFile inputFile) {
+  public SonarLintInputFile create(ClientInputFile inputFile) {
     SonarLintInputFile defaultInputFile = new SonarLintInputFile(inputFile, f -> {
       LOG.debug("Initializing metadata of file {}", f.uri());
       Charset charset = f.charset();
