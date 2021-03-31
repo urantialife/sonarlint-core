@@ -31,9 +31,11 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+import org.sonarsource.sonarlint.core.client.api.common.ClientProjectFileEvent;
 import org.sonarsource.sonarlint.core.client.api.common.LogOutput;
 import org.sonarsource.sonarlint.core.client.api.common.PluginDetails;
 import org.sonarsource.sonarlint.core.client.api.common.ProgressMonitor;
+import org.sonarsource.sonarlint.core.client.api.common.ProjectFileEventWatcher;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.AnalysisResults;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.IssueListener;
 import org.sonarsource.sonarlint.core.client.api.connected.ConnectedAnalysisConfiguration;
@@ -98,6 +100,11 @@ public final class ConnectedSonarLintEngineImpl implements ConnectedSonarLintEng
     for (StateListener listener : stateListeners) {
       listener.stateChanged(state);
     }
+  }
+
+  @Override
+  public void fireProjectFileEvent(ClientProjectFileEvent event) {
+    getGlobalContainer().getComponentByType(ProjectFileEventWatcher.class).fireProjectFileEvent(event);
   }
 
   private StorageContainerHandler getHandler() {

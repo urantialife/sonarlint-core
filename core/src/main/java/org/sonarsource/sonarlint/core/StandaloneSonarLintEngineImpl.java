@@ -25,9 +25,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.log.Loggers;
+import org.sonarsource.sonarlint.core.client.api.common.ClientProjectFileEvent;
 import org.sonarsource.sonarlint.core.client.api.common.LogOutput;
 import org.sonarsource.sonarlint.core.client.api.common.PluginDetails;
 import org.sonarsource.sonarlint.core.client.api.common.ProgressMonitor;
+import org.sonarsource.sonarlint.core.client.api.common.ProjectFileEventWatcher;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.AnalysisResults;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.IssueListener;
 import org.sonarsource.sonarlint.core.client.api.exceptions.SonarLintWrappedException;
@@ -93,6 +95,11 @@ public final class StandaloneSonarLintEngineImpl implements StandaloneSonarLintE
     } finally {
       rwl.readLock().unlock();
     }
+  }
+
+  @Override
+  public void fireProjectFileEvent(ClientProjectFileEvent event) {
+    getGlobalContainer().getComponentByType(ProjectFileEventWatcher.class).fireProjectFileEvent(event);
   }
 
   private void setLogging(@Nullable LogOutput logOutput) {

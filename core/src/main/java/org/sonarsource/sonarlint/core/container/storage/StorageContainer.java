@@ -32,6 +32,7 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.sonarlint.core.NodeJsHelper;
 import org.sonarsource.sonarlint.core.client.api.common.Language;
+import org.sonarsource.sonarlint.core.client.api.common.ProjectFileEventWatcher;
 import org.sonarsource.sonarlint.core.client.api.connected.ConnectedGlobalConfiguration;
 import org.sonarsource.sonarlint.core.client.api.connected.ConnectedRuleDetails;
 import org.sonarsource.sonarlint.core.client.api.connected.GlobalStorageStatus;
@@ -119,6 +120,7 @@ public class StorageContainer extends ComponentContainer {
       new SonarLintRulesProvider(),
       new SonarQubeVersion(version),
       new SonarLintRuntimeImpl(version),
+      ProjectFileEventWatcher.class,
       System2.INSTANCE);
   }
 

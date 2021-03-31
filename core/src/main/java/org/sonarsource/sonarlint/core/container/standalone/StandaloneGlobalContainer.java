@@ -35,6 +35,7 @@ import org.sonarsource.sonarlint.core.NodeJsHelper;
 import org.sonarsource.sonarlint.core.analyzer.sensor.SensorsExecutor;
 import org.sonarsource.sonarlint.core.client.api.common.ClientFileWalker;
 import org.sonarsource.sonarlint.core.client.api.common.PluginDetails;
+import org.sonarsource.sonarlint.core.client.api.common.ProjectFileEventWatcher;
 import org.sonarsource.sonarlint.core.client.api.common.RuleKey;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.AnalysisResults;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.IssueListener;
@@ -93,6 +94,7 @@ public class StandaloneGlobalContainer extends ComponentContainer {
       ExtensionInstaller.class,
       new SonarQubeVersion(version),
       new SonarLintRuntimeImpl(version),
+      ProjectFileEventWatcher.class,
 
       new GlobalTempFolderProvider(),
       UriReader.class,
