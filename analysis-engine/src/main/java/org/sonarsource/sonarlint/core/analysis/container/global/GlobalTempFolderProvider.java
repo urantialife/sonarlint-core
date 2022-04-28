@@ -34,7 +34,7 @@ public class GlobalTempFolderProvider {
 
   private static final SonarLintLogger LOG = SonarLintLogger.get();
   private static final long CLEAN_MAX_AGE = TimeUnit.DAYS.toMillis(21);
-  static final String TMP_NAME_PREFIX = ".sonarlinttmp_";
+  private static final String TMP_NAME_PREFIX = ".sonarlinttmp_";
 
   private GlobalTempFolder tempFolder;
 
