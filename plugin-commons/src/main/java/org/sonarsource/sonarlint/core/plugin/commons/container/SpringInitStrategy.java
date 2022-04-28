@@ -29,7 +29,7 @@ public abstract class SpringInitStrategy implements BeanFactoryPostProcessor {
   @Override
   public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
     for (String beanName : beanFactory.getBeanDefinitionNames()) {
-      BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanName);
+      var beanDefinition = beanFactory.getBeanDefinition(beanName);
       Class<?> rawClass = beanDefinition.getResolvableType().getRawClass();
       beanDefinition.setLazyInit(isLazyInit(beanDefinition, rawClass));
     }
